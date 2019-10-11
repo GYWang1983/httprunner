@@ -16,10 +16,12 @@ log_colors_config = {
     'CRITICAL': 'red',
 }
 logger = logging.getLogger("httprunner")
-
+is_file = False
 
 def setup_logger(log_level, log_file=None):
     """setup logger with ColoredFormatter."""
+    global is_file
+
     level = getattr(logging, log_level.upper(), None)
     if not level:
         color_print("Invalid log level: %s" % log_level, "RED")
@@ -29,19 +31,20 @@ def setup_logger(log_level, log_file=None):
     if level >= logging.INFO:
         sys.tracebacklimit = 0
 
-    formatter = ColoredFormatter(
-        u"%(log_color)s%(bg_white)s%(levelname)-8s%(reset)s %(message)s",
-        datefmt=None,
-        reset=True,
-        log_colors=log_colors_config
-    )
-
     if log_file:
         handler = logging.FileHandler(log_file, encoding="utf-8")
+        handler.setFormatter(logging.Formatter(u"%(levelname)-8s %(message)s"))
+        is_file = True
     else:
         handler = logging.StreamHandler()
+        formatter = ColoredFormatter(
+            u"%(log_color)s%(bg_white)s%(levelname)-8s%(reset)s %(message)s",
+            datefmt=None,
+            reset=True,
+            log_colors=log_colors_config
+        )
+        handler.setFormatter(formatter)
 
-    handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(level)
 
@@ -59,9 +62,14 @@ def color_print(msg, color="WHITE"):
 def log_with_color(level):
     """ log with color by different level
     """
+    global is_file
+
     def wrapper(text):
-        color = log_colors_config[level.upper()]
-        getattr(logger, level.lower())(coloring(text, color))
+        if not is_file:
+            color = log_colors_config[level.upper()]
+            getattr(logger, level.lower())(coloring(text, color))
+        else:
+            getattr(logger, level.lower())(text)
 
     return wrapper
 

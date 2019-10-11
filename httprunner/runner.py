@@ -212,6 +212,7 @@ class Runner(object):
 
         # teststep name
         test_name = self.session_context.eval_content(test_dict.get("name", ""))
+        logger.log_info("Do Step: {}".format(test_name))
 
         # parse test request
         raw_request = test_dict.get('request', {})
@@ -363,6 +364,7 @@ class Runner(object):
                 }
 
         """
+
         self.meta_datas = None
         if "teststeps" in test_dict:
             # nested testcase
@@ -370,6 +372,9 @@ class Runner(object):
             test_dict["config"]["variables"].update(
                 self.session_context.session_variables_mapping)
             self._run_testcase(test_dict)
+        if "plugin" in test_dict:
+            # TODO(gy.wang): switch types of test step
+            pass
         else:
             # api
             try:
