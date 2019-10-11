@@ -62,8 +62,11 @@ class ResponseObject(object):
         if not matched:
             err_msg = u"Failed to extract data with regex! => {}\n".format(field)
             err_msg += u"response body: {}\n".format(self.text)
-            logger.log_error(err_msg)
-            raise exceptions.ExtractFailure(err_msg)
+            # CHANGED BY gy.wang: extract failure not cause case failure
+            # logger.log_error(err_msg)
+            # raise exceptions.ExtractFailure(err_msg)
+            logger.log_warning(err_msg)
+            return None
 
         return matched.group(1)
 
@@ -111,8 +114,11 @@ class ResponseObject(object):
             except KeyError:
                 err_msg = u"Failed to extract cookie! => {}\n".format(field)
                 err_msg += u"response cookies: {}\n".format(cookies)
-                logger.log_error(err_msg)
-                raise exceptions.ExtractFailure(err_msg)
+                # CHANGED BY gy.wang: extract failure not cause case failure
+                # logger.log_error(err_msg)
+                # raise exceptions.ExtractFailure(err_msg)
+                logger.log_warning(err_msg)
+                return None
 
         # elapsed
         elif top_query == "elapsed":
@@ -144,8 +150,11 @@ class ResponseObject(object):
             except KeyError:
                 err_msg = u"Failed to extract header! => {}\n".format(field)
                 err_msg += u"response headers: {}\n".format(headers)
-                logger.log_error(err_msg)
-                raise exceptions.ExtractFailure(err_msg)
+                # CHANGED BY gy.wang: extract failure not cause case failure
+                # logger.log_error(err_msg)
+                # raise exceptions.ExtractFailure(err_msg)
+                logger.log_warning(err_msg)
+                return None
 
         # response body
         elif top_query in ["content", "text", "json"]:
@@ -168,8 +177,11 @@ class ResponseObject(object):
                 # content = "<html>abcdefg</html>", content.xxx
                 err_msg = u"Failed to extract attribute from response body! => {}\n".format(field)
                 err_msg += u"response body: {}\n".format(body)
-                logger.log_error(err_msg)
-                raise exceptions.ExtractFailure(err_msg)
+                # CHANGED BY gy.wang: extract failure not cause case failure
+                # logger.log_error(err_msg)
+                # raise exceptions.ExtractFailure(err_msg)
+                logger.log_warning(err_msg)
+                return None
 
         # new set response attributes in teardown_hooks
         elif top_query in self.__dict__:
@@ -248,6 +260,7 @@ class ResponseObject(object):
         extracted_variables_mapping = OrderedDict()
         extract_binds_order_dict = utils.ensure_mapping_format(extractors)
 
+        # TODO(gy.wang): field support formula and function
         for key, field in extract_binds_order_dict.items():
             extracted_variables_mapping[key] = self.extract_field(field)
 

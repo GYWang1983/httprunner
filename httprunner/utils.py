@@ -114,8 +114,11 @@ def query_json(json_content, query, delimiter='.'):
     if raise_flag:
         err_msg = u"Failed to extract! => {}\n".format(query)
         err_msg += response_body
-        logger.log_error(err_msg)
-        raise exceptions.ExtractFailure(err_msg)
+        # CHANGED BY gy.wang: extract failure not cause case failure
+        # logger.log_error(err_msg)
+        # raise exceptions.ExtractFailure(err_msg)
+        logger.log_warning(err_msg)
+        return None
 
     return json_content
 
