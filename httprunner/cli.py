@@ -27,6 +27,9 @@ def main_hrun():
         '--log-file',
         help="Write logs to specified file path.")
     parser.add_argument(
+        '--status-file',
+        help="Write case running status to specified file path.")
+    parser.add_argument(
         '--dot-env-path',
         help="Specify .env file path, which is useful for keeping sensitive data.")
     parser.add_argument(
@@ -78,7 +81,8 @@ def main_hrun():
         report_template=args.report_template,
         report_dir=args.report_dir,
         log_level=args.log_level,
-        log_file=args.log_file
+        log_file=args.log_file,
+        status_file=args.status_file
     )
     try:
         for path in args.testcase_paths:

@@ -10,7 +10,7 @@ from httprunner import (__version__, exceptions, loader, logger, parser,
 class HttpRunner(object):
 
     def __init__(self, failfast=False, save_tests=False, report_template=None, report_dir=None,
-        log_level="INFO", log_file=None):
+                 log_level="INFO", log_file=None, status_file=None):
         """ initialize HttpRunner.
 
         Args:
@@ -36,6 +36,7 @@ class HttpRunner(object):
         self.report_template = report_template
         self.report_dir = report_dir
         self._summary = None
+        self.status_file = status_file
 
     def _add_tests(self, testcases):
         """ initialize testcase with Runner() and add to test suite.
@@ -47,9 +48,11 @@ class HttpRunner(object):
             unittest.TestSuite()
 
         """
+
         def _add_test(test_runner, test_dict):
             """ add test to testcase.
             """
+
             def test(self):
                 try:
                     test_runner.run_test(test_dict)
@@ -126,6 +129,17 @@ class HttpRunner(object):
 
             result = self.unittest_runner.run(testcase)
             tests_results.append((testcase, result))
+
+            # gy.wang: write status file: id|success|start|duration
+            if self.status_file:
+                status = [
+                    str(testcase.config["id"]),
+                    "1" if result.wasSuccessful() else "0",
+                    str(getattr(result, "start_at")),
+                    str(getattr(result, "duration"))
+                ]
+                with open(self.status_file, "a") as sf:
+                    sf.write("|".join(status) + "\n")
 
         return tests_results
 
