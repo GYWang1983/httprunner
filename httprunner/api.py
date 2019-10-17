@@ -141,6 +141,10 @@ class HttpRunner(object):
                 with open(self.status_file, "a") as sf:
                     sf.write("|".join(status) + "\n")
 
+        # gy.wang: write status file: finished
+        with open(self.status_file, "a") as sf:
+            sf.write("finished\n")
+
         return tests_results
 
     def _aggregate(self, tests_results):
