@@ -12,3 +12,6 @@ logs/%
 .coverage
 locustfile.py
 site/
+venv/
+reports/
+.idea/
