@@ -30,6 +30,7 @@ colorama = "^0.4.1"
 colorlog = "^4.0"
 filetype = "^1.0"
 future = { version = "^0.17.1", python = "~2.7" }
+sqlalchemy = "^1.3"
 
 [tool.poetry.dev-dependencies]
 flask = "<1.0.0"
@@ -42,6 +43,10 @@ hrun = "httprunner.cli:main_hrun"
 ate = "httprunner.cli:main_hrun"
 httprunner = "httprunner.cli:main_hrun"
 locusts = "httprunner.cli:main_locust"
+
+[[tool.poetry.source]]
+name = "ali"
+url = "http://mirrors.aliyun.com/pypi/simple/"
 
 [build-system]
 requires = ["poetry>=0.12"]
