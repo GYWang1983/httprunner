@@ -142,8 +142,9 @@ class HttpRunner(object):
                     sf.write("|".join(status) + "\n")
 
         # gy.wang: write status file: finished
-        with open(self.status_file, "a") as sf:
-            sf.write("finished\n")
+        if self.status_file:
+            with open(self.status_file, "a") as sf:
+                sf.write("finished\n")
 
         return tests_results
 
