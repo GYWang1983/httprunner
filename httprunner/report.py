@@ -265,10 +265,12 @@ def __stringify_meta_datas(meta_datas):
         for _meta_data in meta_datas:
             __stringify_meta_datas(_meta_data)
     elif isinstance(meta_datas, dict):
-        data_list = meta_datas["data"]
-        for data in data_list:
-            __stringify_request(data["request"])
-            __stringify_response(data["response"])
+        # CHANGED BY(gy.wang): stringify reports by step type
+        if meta_datas['type'] == 'http':
+            data_list = meta_datas["data"]
+            for data in data_list:
+                __stringify_request(data["request"])
+                __stringify_response(data["response"])
 
 
 def render_html_report(summary, report_template=None, report_dir=None):

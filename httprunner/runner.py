@@ -5,6 +5,7 @@ from unittest.case import SkipTest
 from httprunner import exceptions, logger, response, utils
 from httprunner.client import HttpSession
 from httprunner.context import SessionContext
+from httprunner.database import SqlRunner
 
 
 class Runner(object):
@@ -72,6 +73,7 @@ class Runner(object):
 
         self.http_client_session = http_client_session or HttpSession()
         self.session_context = SessionContext(config_variables)
+        self.sql_runner = SqlRunner()
 
         if testcase_setup_hooks:
             self.do_hook_actions(testcase_setup_hooks, "setup")
@@ -89,13 +91,18 @@ class Runner(object):
         self.validation_results = []
         self.http_client_session.init_meta_data()
 
-    def __get_test_data(self):
+    def __get_test_data(self, test_dict):
         """ get request/response data and validate results
         """
         if not isinstance(self.http_client_session, HttpSession):
             return
 
-        meta_data = self.http_client_session.meta_data
+        # TODO(gy.wang): meta data for database
+        if "database" in test_dict:
+            meta_data = self.sql_runner.meta_data
+        else:
+            meta_data = self.http_client_session.meta_data
+
         meta_data["validators"] = self.validation_results
         return meta_data
 
@@ -214,47 +221,67 @@ class Runner(object):
         test_name = self.session_context.eval_content(test_dict.get("name", ""))
         logger.log_info("Do Step: {}".format(test_name))
 
-        # parse test request
-        raw_request = test_dict.get('request', {})
-        parsed_test_request = self.session_context.eval_content(raw_request)
-        self.session_context.update_test_variables("request", parsed_test_request)
-
-        # prepend url with base_url unless it's already an absolute URL
-        url = parsed_test_request.pop('url')
-        base_url = self.session_context.eval_content(test_dict.get("base_url", ""))
-        parsed_url = utils.build_url(base_url, url)
-
         # setup hooks
         setup_hooks = test_dict.get("setup_hooks", [])
         if setup_hooks:
             self.do_hook_actions(setup_hooks, "setup")
 
-        try:
-            method = parsed_test_request.pop('method')
-            parsed_test_request.setdefault("verify", self.verify)
-            group_name = parsed_test_request.pop("group", None)
-        except KeyError:
-            raise exceptions.ParamsError("URL or METHOD missed!")
+        # CHANGED(gy.wang): switch database step
+        raw_database = test_dict.get('database', {})
+        if raw_database:
+            parsed_database_query = self.session_context.eval_content(raw_database)
 
-        # TODO: move method validation to json schema
-        valid_methods = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-        if method.upper() not in valid_methods:
-            err_msg = u"Invalid HTTP method! => {}\n".format(method)
-            err_msg += "Available HTTP methods: {}".format("/".join(valid_methods))
-            logger.log_error(err_msg)
-            raise exceptions.ParamsError(err_msg)
+            try:
+                dialect = parsed_database_query.get('dialect')
+            except KeyError:
+                raise exceptions.ParamsError("dialect missed in database step!")
 
-        logger.log_info("{method} {url}".format(method=method, url=parsed_url))
-        logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_test_request))
+            valid_dialect = ["mysql"]
+            if dialect.lower() not in valid_dialect:
+                err_msg = u"Unsupported database! => {}\n".format(dialect)
+                logger.log_error(err_msg)
+                raise exceptions.ParamsError(err_msg)
 
-        # request
-        resp = self.http_client_session.request(
-            method,
-            parsed_url,
-            name=(group_name or test_name),
-            **parsed_test_request
-        )
-        resp_obj = response.ResponseObject(resp)
+            resp_obj = self.sql_runner.execute(parsed_database_query, test_name)
+
+        else:
+            # http request
+            # parse test request
+            raw_request = test_dict.get('request', {})
+            parsed_test_request = self.session_context.eval_content(raw_request)
+            self.session_context.update_test_variables("request", parsed_test_request)
+
+            # prepend url with base_url unless it's already an absolute URL
+            url = parsed_test_request.pop('url')
+            base_url = self.session_context.eval_content(test_dict.get("base_url", ""))
+            parsed_url = utils.build_url(base_url, url)
+
+            try:
+                method = parsed_test_request.pop('method')
+                parsed_test_request.setdefault("verify", self.verify)
+                group_name = parsed_test_request.pop("group", None)
+            except KeyError:
+                raise exceptions.ParamsError("URL or METHOD missed!")
+
+            # TODO: move method validation to json schema
+            valid_methods = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+            if method.upper() not in valid_methods:
+                err_msg = u"Invalid HTTP method! => {}\n".format(method)
+                err_msg += "Available HTTP methods: {}".format("/".join(valid_methods))
+                logger.log_error(err_msg)
+                raise exceptions.ParamsError(err_msg)
+
+            logger.log_info("{method} {url}".format(method=method, url=parsed_url))
+            logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_test_request))
+
+            # request
+            resp = self.http_client_session.request(
+                method,
+                parsed_url,
+                name=(group_name or test_name),
+                **parsed_test_request
+            )
+            resp_obj = response.ResponseObject(resp)
 
         # teardown hooks
         teardown_hooks = test_dict.get("teardown_hooks", [])
@@ -381,11 +408,13 @@ class Runner(object):
                 self._run_test(test_dict)
             except Exception:
                 # log exception request_type and name for locust stat
+                # TODO(gy.wang): none-http step
                 self.exception_request_type = test_dict["request"]["method"]
                 self.exception_name = test_dict.get("name")
                 raise
             finally:
-                self.meta_datas = self.__get_test_data()
+                # CHANGED By gy.wang: meta data for reports
+                self.meta_datas = self.__get_test_data(test_dict)
 
     def export_variables(self, output_variables_list):
         """ export current testcase variables

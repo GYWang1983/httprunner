@@ -213,6 +213,7 @@
         <a class="button" href="#popup_log_{{meta_data_index}}">log-{{loop.index}}</a>
         <div id="popup_log_{{meta_data_index}}" class="overlay">
           <div class="popup">
+            {% if meta_data.type == 'http' %}
             <h2>Request and Response data</h2>
             <a class="close" href="#record_{{meta_data_index}}">&times;</a>
 
@@ -325,6 +326,13 @@
               </div>
 
             </div>
+            {% else %}
+            <h2>Database data</h2>
+            <a class="close" href="#record_{{meta_data_index}}">&times;</a>
+            <div class="content">
+              <h3>Name: {{ meta_data.name }}</h3>
+            </div>
+            {% endif %}
           </div>
         </div>
         {% endfor %}

@@ -38,6 +38,7 @@ class HttpSession(requests.Session):
         """ initialize meta_data, it will store detail data of request and response
         """
         self.meta_data = {
+            "type": "http",
             "name": "",
             "data": [
                 {

@@ -1,0 +1,26 @@
+config:
+    name: "check database"
+    base_url: "http://127.0.0.1:5000"
+    variables:
+        uid: 9001
+        device_sn: "TESTCASE_CREATE_XXX"
+
+teststeps:
+-
+    name: check database
+    database:
+      dialect: mysql
+      connection:
+         url: localhost/testrunner
+         user: root
+      sql: SELECT status FROM user WHERE uid=$uid;
+    validate:
+        - count_eq: ["records", 1]
+        - eq: ["records[0].status", 1]
+    extract:
+        - user_status: records[0].status
+    export:
+        - table: [user]
+        #- sql: "SELECT 1"
+        #- script: sql/export.sql
+

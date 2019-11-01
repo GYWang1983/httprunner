@@ -212,6 +212,7 @@ class HttpRunner(object):
         self.exception_stage = "run test suite"
         results = self._run_suite(test_suite)
 
+        # TODO(gy.wang): write report
         # aggregate results
         self.exception_stage = "aggregate results"
         self._summary = self._aggregate(results)
