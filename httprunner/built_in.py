@@ -16,6 +16,7 @@ import filetype
 from httprunner.compat import basestring, builtin_str, integer_types, str
 from httprunner.exceptions import ParamsError
 from requests_toolbelt import MultipartEncoder
+from sqlalchemy.engine import ResultProxy
 
 PWD = os.getcwd()
 
@@ -178,6 +179,16 @@ def startswith(check_value, expect_value):
 
 def endswith(check_value, expect_value):
     assert builtin_str(check_value).endswith(builtin_str(expect_value))
+
+
+def size(obj):
+    if obj:
+        if isinstance(obj, (list, tuple, dict, basestring)):
+            return len(obj)
+        elif isinstance(obj, ResultProxy):
+            return obj.rowcount
+    return 0
+
 
 """ built-in hooks
 """
