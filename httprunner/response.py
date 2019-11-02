@@ -265,3 +265,26 @@ class ResponseObject(object):
             extracted_variables_mapping[key] = self.extract_field(field)
 
         return extracted_variables_mapping
+
+    def log_error_message(self, request_data):
+        err_msg = "{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
+
+        # log request
+        request = self.resp_obj.request
+        if request:
+            err_msg += "====== request details ======\n"
+            err_msg += "url: {}\n".format(request.url)
+            err_msg += "method: {}\n".format(request.method)
+            err_msg += "headers: {}\n".format(request_data.pop("headers", {}))
+            for k, v in request_data.items():
+                v = utils.omit_long_data(v)
+                err_msg += "{}: {}\n".format(k, repr(v))
+
+            err_msg += "\n"
+
+        # log response
+        err_msg += "====== response details ======\n"
+        err_msg += "status_code: {}\n".format(self.status_code)
+        err_msg += "headers: {}\n".format(self.headers)
+        err_msg += "body: {}\n".format(repr(self.text))
+        logger.log_error(err_msg)

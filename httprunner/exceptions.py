@@ -58,3 +58,6 @@ class ApiNotFound(NotFoundError):
 
 class TestcaseNotFound(NotFoundError):
     pass
+
+class DatabaseQueryError(MyBaseError):
+    pass
