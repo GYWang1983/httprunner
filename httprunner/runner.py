@@ -97,7 +97,7 @@ class Runner(object):
         if not isinstance(self.http_client_session, HttpSession):
             return
 
-        # TODO(gy.wang): meta data for database
+        # CHANGED BY gy.wang: meta data for database
         if "database" in test_dict:
             meta_data = self.sql_runner.meta_data
         else:
@@ -227,12 +227,13 @@ class Runner(object):
             self.do_hook_actions(setup_hooks, "setup")
 
         # CHANGED(gy.wang): switch database step
-        raw_database = test_dict.get('database', {})
-        if raw_database:
-            parsed_database_query = self.session_context.eval_content(raw_database)
+        test_type = self._test_step_type(test_dict)
+        if test_type == 'database':
+            raw_database = test_dict.get('database', {})
+            parsed_test_data = self.session_context.eval_content(raw_database)
 
             try:
-                dialect = parsed_database_query.get('dialect')
+                dialect = parsed_test_data.get('dialect')
             except KeyError:
                 raise exceptions.ParamsError("dialect missed in database step!")
 
@@ -242,24 +243,24 @@ class Runner(object):
                 logger.log_error(err_msg)
                 raise exceptions.ParamsError(err_msg)
 
-            resp_obj = self.sql_runner.execute(parsed_database_query, test_name)
+            resp_obj = self.sql_runner.execute(parsed_test_data, test_name)
 
         else:
             # http request
             # parse test request
             raw_request = test_dict.get('request', {})
-            parsed_test_request = self.session_context.eval_content(raw_request)
-            self.session_context.update_test_variables("request", parsed_test_request)
+            parsed_test_data = self.session_context.eval_content(raw_request)
+            self.session_context.update_test_variables("request", parsed_test_data)
 
             # prepend url with base_url unless it's already an absolute URL
-            url = parsed_test_request.pop('url')
+            url = parsed_test_data.pop('url')
             base_url = self.session_context.eval_content(test_dict.get("base_url", ""))
             parsed_url = utils.build_url(base_url, url)
 
             try:
-                method = parsed_test_request.pop('method')
-                parsed_test_request.setdefault("verify", self.verify)
-                group_name = parsed_test_request.pop("group", None)
+                method = parsed_test_data.pop('method')
+                parsed_test_data.setdefault("verify", self.verify)
+                group_name = parsed_test_data.pop("group", None)
             except KeyError:
                 raise exceptions.ParamsError("URL or METHOD missed!")
 
@@ -272,14 +273,14 @@ class Runner(object):
                 raise exceptions.ParamsError(err_msg)
 
             logger.log_info("{method} {url}".format(method=method, url=parsed_url))
-            logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_test_request))
+            logger.log_debug("request kwargs(raw): {kwargs}".format(kwargs=parsed_test_data))
 
             # request
             resp = self.http_client_session.request(
                 method,
                 parsed_url,
                 name=(group_name or test_name),
-                **parsed_test_request
+                **parsed_test_data
             )
             resp_obj = response.ResponseObject(resp)
 
@@ -299,30 +300,20 @@ class Runner(object):
         try:
             self.session_context.validate(validators, resp_obj)
         except (exceptions.ParamsError, exceptions.ValidationFailure, exceptions.ExtractFailure):
-            err_msg = "{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
-
-            # log request
-            err_msg += "====== request details ======\n"
-            err_msg += "url: {}\n".format(parsed_url)
-            err_msg += "method: {}\n".format(method)
-            err_msg += "headers: {}\n".format(parsed_test_request.pop("headers", {}))
-            for k, v in parsed_test_request.items():
-                v = utils.omit_long_data(v)
-                err_msg += "{}: {}\n".format(k, repr(v))
-
-            err_msg += "\n"
-
-            # log response
-            err_msg += "====== response details ======\n"
-            err_msg += "status_code: {}\n".format(resp_obj.status_code)
-            err_msg += "headers: {}\n".format(resp_obj.headers)
-            err_msg += "body: {}\n".format(repr(resp_obj.text))
-            logger.log_error(err_msg)
-
+            resp_obj.log_error_message(parsed_test_data)
             raise
 
         finally:
             self.validation_results = self.session_context.validation_results
+
+    # ADD By gy.wang: switch test step type
+    def _test_step_type(self, testcase_dict):
+        if 'database' in testcase_dict:
+            testcase_dict['type'] = 'database'
+        else:
+            testcase_dict['type'] = 'http'
+
+        return testcase_dict['type']
 
     def _run_testcase(self, testcase_dict):
         """ run single testcase.
@@ -408,8 +399,9 @@ class Runner(object):
                 self._run_test(test_dict)
             except Exception:
                 # log exception request_type and name for locust stat
-                # TODO(gy.wang): none-http step
-                self.exception_request_type = test_dict["request"]["method"]
+                # CHANGED By gy.wang: none-http step
+                if test_dict["request"]:
+                    self.exception_request_type = test_dict["request"]["method"]
                 self.exception_name = test_dict.get("name")
                 raise
             finally:
