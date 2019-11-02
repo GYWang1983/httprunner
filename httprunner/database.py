@@ -1,11 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy import exc
-from httprunner import exceptions, logger, utils
+from httprunner import exceptions, logger
 from httprunner.response import ResponseObject
 
 sqlalchemy_dialect_mapping = {
     'mysql': 'mysql+pymysql'
 }
+
 
 class SqlRunner(object):
     """ Execute sql.
@@ -92,36 +93,46 @@ class SqlRunner(object):
                 conn.close()
 
 
-# engine = create_engine('mysql+pymysql://root@localhost/testrunner', echo=True)
-# conn = engine.connect()
-# result = conn.execute("select * from `case`")
-# n = result.rowcount
-# print(n)
-# for row in result:
-#     print("row:", row.items())
-
 class DatabaseResult(ResponseObject):
 
     def __init__(self, result):
         super().__init__(result)
         self.resp_obj = result
+        self.rows = result.fetchall()
         self.count = result.rowcount
 
     def __getattr__(self, key):
-        try:
-            if key == "json":
-                value = self.resp_obj.json()
-            elif key == "cookies":
-                value = self.resp_obj.cookies.get_dict()
-            else:
-                value = getattr(self.resp_obj, key)
+        return self._extract_field_with_delimiter(key)
+        # try:
+        #     value = getattr(self.resp_obj, key)
+        #     return value
+        # except AttributeError:
+        #     err_msg = "ResultObject does not have attribute: {}".format(key)
+        #     logger.log_error(err_msg)
+        #     raise exceptions.ParamsError(err_msg)
 
-            self.__dict__[key] = value
-            return value
-        except AttributeError:
-            err_msg = "ResponseObject does not have attribute: {}".format(key)
-            logger.log_error(err_msg)
-            raise exceptions.ParamsError(err_msg)
+    def _top_records(self, n=0):
+        rs = []
+        i = 0
+        for row in self.rows:
+            if i > n:
+                break
+            rs.append(dict(row))
+            i += 1
+        return rs
+
+    def _record(self, row=0):
+        return dict(self.rows[row]) if row < self.count else {}
+
+    def _value(self, row=0, col='0'):
+        if row >= self.count:
+            return None
+        else:
+            try:
+                return self.rows[row][int(col)] if col.isdigit() else self.rows[row][col]
+            except exc.NoSuchColumnError | IndexError:
+                logger.log_warning("No column {} in result set.\n".format(col))
+                return None
 
     def _extract_field_with_delimiter(self, field):
         """ database result content could be sqlalchemy.engine.ResultProxy.
@@ -129,142 +140,96 @@ class DatabaseResult(ResponseObject):
         Args:
             field (str): string joined by delimiter.
             e.g.
-                "status_code"
-                "headers"
-                "cookies"
-                "content"
-                "headers.content-type"
-                "content.person.name.first_name"
-
+                "count"
+                "record"
+                "record.0"
+                "record.0.col"
+                "first"
+                "first.col"
+                "top" (equals to first)
+                "top.1"
         """
-        # string.split(sep=None, maxsplit=-1) -> list of strings
-        # e.g. "content.person.name" => ["content", "person.name"]
-        try:
-            top_query, sub_query = field.split('.', 1)
-        except ValueError:
-            top_query = field
-            sub_query = None
 
-        # status_code
-        if top_query in ["count"]:
-            if sub_query:
-                # status_code.XX
-                err_msg = u"Failed to extract '{}' from database result\n".format(field)
-                logger.log_error(err_msg)
-                raise exceptions.ParamsError(err_msg)
+        path = field.split('.')
 
-            return getattr(self, top_query)
+        # count
+        if path[0] == "count":
+            return self.count
 
-        # cookies
-        elif top_query == "cookies":
-            cookies = self.cookies
-            if not sub_query:
-                # extract cookies
-                return cookies
+        # TODO: gy.wang: elapsed
+        # elif top_query == "elapsed":
+        #     available_attributes = u"available attributes: days, seconds, microseconds, total_seconds"
+        #     if not sub_query:
+        #         err_msg = u"elapsed is datetime.timedelta instance, attribute should also be specified!\n"
+        #         err_msg += available_attributes
+        #         logger.log_error(err_msg)
+        #         raise exceptions.ParamsError(err_msg)
+        #     elif sub_query in ["days", "seconds", "microseconds"]:
+        #         return getattr(self.elapsed, sub_query)
+        #     elif sub_query == "total_seconds":
+        #         return self.elapsed.total_seconds()
+        #     else:
+        #         err_msg = "{} is not valid datetime.timedelta attribute.\n".format(sub_query)
+        #         err_msg += available_attributes
+        #         logger.log_error(err_msg)
+        #         raise exceptions.ParamsError(err_msg)
 
-            try:
-                return cookies[sub_query]
-            except KeyError:
-                err_msg = u"Failed to extract cookie! => {}\n".format(field)
-                err_msg += u"response cookies: {}\n".format(cookies)
-                # CHANGED BY gy.wang: extract failure not cause case failure
-                # logger.log_error(err_msg)
-                # raise exceptions.ExtractFailure(err_msg)
-                logger.log_warning(err_msg)
-                return None
+        # result set
+        elif path[0] == 'result':
+            if len(path) == 1:
+                # 'result' -> all result in dict
+                return self._top_records()
+            elif path[1].isdigit():
+                if len(path) == 2:
+                    # 'result.{num}' -> one row in dict
+                    return self._record(int(path[1]))
+                else:
+                    # 'result.{num}.{col}' -> a column value
+                    return self._value(int(path[1]), path[2])
 
-        # elapsed
-        elif top_query == "elapsed":
-            available_attributes = u"available attributes: days, seconds, microseconds, total_seconds"
-            if not sub_query:
-                err_msg = u"elapsed is datetime.timedelta instance, attribute should also be specified!\n"
-                err_msg += available_attributes
-                logger.log_error(err_msg)
-                raise exceptions.ParamsError(err_msg)
-            elif sub_query in ["days", "seconds", "microseconds"]:
-                return getattr(self.elapsed, sub_query)
-            elif sub_query == "total_seconds":
-                return self.elapsed.total_seconds()
+            # TODO: error
+
+        elif path[0] == 'top':
+            if len(path) == 1:
+                # 'top' -> first row in dict
+                return self._record(0)
+            elif path[1].isdigit():
+                # 'top.{num}' -> top n row in dict
+                return self._top_records(int(path[1]))
+
+            # TODO: error
+
+        elif path[0] == 'first':
+            if len(path) == 1:
+                # 'first' -> first row in dict
+                return self._record(0)
             else:
-                err_msg = "{} is not valid datetime.timedelta attribute.\n".format(sub_query)
-                err_msg += available_attributes
-                logger.log_error(err_msg)
-                raise exceptions.ParamsError(err_msg)
+                # 'first.{col}' -> column value in first row
+                return self._value(0, path[1])
 
-        # headers
-        elif top_query == "headers":
-            headers = self.headers
-            if not sub_query:
-                # extract headers
-                return headers
-
-            try:
-                return headers[sub_query]
-            except KeyError:
-                err_msg = u"Failed to extract header! => {}\n".format(field)
-                err_msg += u"response headers: {}\n".format(headers)
-                # CHANGED BY gy.wang: extract failure not cause case failure
-                # logger.log_error(err_msg)
-                # raise exceptions.ExtractFailure(err_msg)
-                logger.log_warning(err_msg)
-                return None
-
-        # response body
-        elif top_query in ["content", "text", "json"]:
-            try:
-                body = self.json
-            except exceptions.JSONDecodeError:
-                body = self.text
-
-            if not sub_query:
-                # extract response body
-                return body
-
-            if isinstance(body, (dict, list)):
-                # content = {"xxx": 123}, content.xxx
-                return utils.query_json(body, sub_query)
-            elif sub_query.isdigit():
-                # content = "abcdefg", content.3 => d
-                return utils.query_json(body, sub_query)
-            else:
-                # content = "<html>abcdefg</html>", content.xxx
-                err_msg = u"Failed to extract attribute from response body! => {}\n".format(field)
-                err_msg += u"response body: {}\n".format(body)
-                # CHANGED BY gy.wang: extract failure not cause case failure
-                # logger.log_error(err_msg)
-                # raise exceptions.ExtractFailure(err_msg)
-                logger.log_warning(err_msg)
-                return None
-
-        # new set response attributes in teardown_hooks
-        elif top_query in self.__dict__:
-            attributes = self.__dict__[top_query]
-
-            if not sub_query:
-                # extract response attributes
-                return attributes
-
-            if isinstance(attributes, (dict, list)):
-                # attributes = {"xxx": 123}, content.xxx
-                return utils.query_json(attributes, sub_query)
-            elif sub_query.isdigit():
-                # attributes = "abcdefg", attributes.3 => d
-                return utils.query_json(attributes, sub_query)
-            else:
-                # content = "attributes.new_attribute_not_exist"
-                err_msg = u"Failed to extract cumstom set attribute from teardown hooks! => {}\n".format(field)
-                err_msg += u"response set attributes: {}\n".format(attributes)
-                logger.log_error(err_msg)
-                raise exceptions.TeardownHooksFailure(err_msg)
+            # if isinstance(body, (dict, list)):
+            #     # content = {"xxx": 123}, content.xxx
+            #     return utils.query_json(body, sub_query)
+            # elif sub_query.isdigit():
+            #     # content = "abcdefg", content.3 => d
+            #     return utils.query_json(body, sub_query)
+            # else:
+            #     # content = "<html>abcdefg</html>", content.xxx
+            #     err_msg = u"Failed to extract attribute from response body! => {}\n".format(field)
+            #     err_msg += u"response body: {}\n".format(body)
+            #     # CHANGED BY gy.wang: extract failure not cause case failure
+            #     # logger.log_error(err_msg)
+            #     # raise exceptions.ExtractFailure(err_msg)
+            #     logger.log_warning(err_msg)
+            #     return None
 
         # others
         else:
-            err_msg = u"Failed to extract attribute from response! => {}\n".format(field)
-            err_msg += u"available response attributes: status_code, cookies, elapsed, headers, content, text, json, encoding, ok, reason, url.\n\n"
-            err_msg += u"If you want to set attribute in teardown_hooks, take the following example as reference:\n"
-            err_msg += u"response.new_attribute = 'new_attribute_value'\n"
+            err_msg = u"Failed to extract attribute from database result! => {}\n".format(field)
+            err_msg += u"available attributes: count, result, top, first.\n\n"
             logger.log_error(err_msg)
             raise exceptions.ParamsError(err_msg)
 
     def log_error_message(self, query_data):
+        # TODO: log detail messages when error occurs
         pass
