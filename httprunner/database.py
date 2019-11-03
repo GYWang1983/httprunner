@@ -34,9 +34,7 @@ class SqlRunner(object):
                     "user": "",
                 },
                 "sql": "",
-                "result": {
-
-                }
+                "result": None
             },
             "stat": {
                 "content_size": "N/A",
@@ -73,7 +71,7 @@ class SqlRunner(object):
         self.meta_data["data"]["connection"]["dialect"] = dialect
         self.meta_data["data"]["connection"]["url"] = url
         self.meta_data["data"]["connection"]["user"] = user
-        self.meta_data["sql"] = sql
+        self.meta_data["data"]["sql"] = sql
 
         conn = None
         try:
@@ -81,7 +79,9 @@ class SqlRunner(object):
             engine = create_engine(conn_str)
             conn = engine.connect()
             result = conn.execute(sql)
-            return DatabaseResult(result)
+            resp = DatabaseResult(result)
+            self.meta_data["data"]["result"] = resp
+            return resp
 
         except exc.DatabaseError as e:
             error_str = str(e)

@@ -400,7 +400,7 @@ class Runner(object):
             except Exception:
                 # log exception request_type and name for locust stat
                 # CHANGED By gy.wang: none-http step
-                if test_dict["request"]:
+                if 'request' in test_dict:
                     self.exception_request_type = test_dict["request"]["method"]
                 self.exception_name = test_dict.get("name")
                 raise

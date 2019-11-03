@@ -327,10 +327,38 @@
 
             </div>
             {% else %}
-            <h2>Database data</h2>
+            <h2>Database Result</h2>
             <a class="close" href="#record_{{meta_data_index}}">&times;</a>
             <div class="content">
               <h3>Name: {{ meta_data.name }}</h3>
+            </div>
+
+            <h3>Connection:</h3>
+            {% set conn = meta_data.data.connection %}
+            <div style="overflow: auto">
+                <table>
+                  <tr>
+                    <th>Dialect</th>
+                    <td>{{ conn.dialect }}</td>
+                  </tr>
+                  <tr>
+                    <th>Connection</th>
+                    <td>{{ conn.url }}</td>
+                  </tr>
+                  <tr>
+                    <th>User</th>
+                    <td>{{ conn.user }}</td>
+                  </tr>
+                </table>
+            </div>
+
+            <h3>SQL:</h3>
+            <div style="overflow: auto">
+              <table>
+                  <tr>
+                      <td>{{ meta_data.data.sql }}</td>
+                  </tr>
+              </table>
             </div>
             {% endif %}
           </div>

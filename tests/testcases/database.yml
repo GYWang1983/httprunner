@@ -17,6 +17,7 @@ teststeps:
         - eq: ["count", 4]
     extract:
         - count: count
+        - name: first.name
 #    export:
 #        - table: [user]
         #- sql: "SELECT 1"
