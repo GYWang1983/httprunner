@@ -10,9 +10,12 @@ teststeps:
     database:
       dialect: mysql
       connection:
-         url: localhost/testrunner
+         url: localhost/test
          user: root
-      sql: SELECT * FROM `case`;
+      #sql: SELECT * FROM `case`;
+      sql: |
+        INSERT INTO `demo` values (1, 2, 3);
+        INSERT INTO `demo` values (2, 5, 6);
     validate:
         - eq: ["count", 4]
     extract:

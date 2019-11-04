@@ -1,5 +1,7 @@
+import sqlparse
 from sqlalchemy import create_engine
 from sqlalchemy import exc
+from unittest import SkipTest
 from httprunner import exceptions, logger
 from httprunner.response import ResponseObject
 
@@ -61,24 +63,36 @@ class SqlRunner(object):
         else:
             auth = user
 
-        conn_str = "{}://{}@{}".format(sqlalchemy_dialect_mapping.get(dialect.lower()), auth, url)
-        sql = query.get('sql')
+        sql_array = []
+        statements = sqlparse.parse(query.get('sql'))
+        for stmt in statements:
+            sql_type = stmt.get_type()
+            if sql_type != 'UNKNOWN':
+                sql = sqlparse.format(stmt.value, strip_comments=True, strip_whitespace=True)
+                sql_array.append((sql_type, sql))
 
-        # record test name
-        self.meta_data["name"] = name
+        if not sql_array:
+            raise SkipTest("SQL is empty")
 
         # record original query info
+        self.meta_data["name"] = name
+        self.meta_data["data"]["sql"] = sql_array
         self.meta_data["data"]["connection"]["dialect"] = dialect
         self.meta_data["data"]["connection"]["url"] = url
         self.meta_data["data"]["connection"]["user"] = user
-        self.meta_data["data"]["sql"] = sql
 
         conn = None
+        result = None
+
         try:
+            conn_str = "{}://{}@{}".format(sqlalchemy_dialect_mapping.get(dialect.lower()), auth, url)
             logger.log_debug("connect to database: {}".format(conn_str))
             engine = create_engine(conn_str)
             conn = engine.connect()
-            result = conn.execute(sql)
+
+            for sql_type, sql in sql_array:
+                result = conn.execute(sql)
+
             resp = DatabaseResult(result)
             self.meta_data["data"]["result"] = resp
             return resp

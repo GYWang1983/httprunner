@@ -320,6 +320,19 @@ url = "http://mirrors.aliyun.com/pypi/simple"
 
 [[package]]
 category = "main"
+description = "Non-validating SQL parser"
+name = "sqlparse"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "0.3.0"
+
+[package.source]
+reference = "ali"
+type = "legacy"
+url = "http://mirrors.aliyun.com/pypi/simple"
+
+[[package]]
+category = "main"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 name = "urllib3"
 optional = false
@@ -345,7 +358,7 @@ type = "legacy"
 url = "http://mirrors.aliyun.com/pypi/simple"
 
 [metadata]
-content-hash = "b26906f9d82a31d6071b006ec2d17f36dec17c1b3e0fbb93c89b1ffb1ba3cad5"
+content-hash = "df61e1a50374d7ad43965616462afde6cbcbda1576c0ae4d5be971dec6dc6e04"
 python-versions = "~2.7 || ^3.5"
 
 [metadata.hashes]
@@ -371,5 +384,6 @@ pyyaml = ["0113bc0ec2ad727182326b61326afa3d1d8280ae1122493553fd6f4397f33df9", "0
 requests = ["11e007a8a2aa0323f5a921e9e6a2d7e4e67d9877e85773fba9ba6419025cbeb4", "9cf5292fcd0f598c671cfc1e0d7d1a7f13bb8085e9a590f48c010551dc6c4b31"]
 requests-toolbelt = ["42c9c170abc2cacb78b8ab23ac957945c7716249206f90874651971a4acff237", "f6a531936c6fa4c6cfce1b9c10d5c4f498d16528d2a54a22ca00011205a187b5"]
 sqlalchemy = ["0f0768b5db594517e1f5e1572c73d14cf295140756431270d89496dc13d5e46c"]
+sqlparse = ["40afe6b8d4b1117e7dff5504d7a8ce07d9a1b15aeeade8a2d10f130a834f8177", "7c3dca29c022744e95b547e867cee89f4fce4373f3549ccd8797d8eb52cdb873"]
 urllib3 = ["3de946ffbed6e6746608990594d08faac602528ac7015ac28d33cee6a45b7398", "9a107b99a5393caf59c7aa3c1249c16e6879447533d0887f4336dde834c7be86"]
 werkzeug = ["7280924747b5733b246fe23972186c6b348f9ae29724135a6dfc1e53cea433e7", "e5f4a1f98b52b18a93da705a7458e55afb26f32bff83ff5d19189f92462d65c4"]

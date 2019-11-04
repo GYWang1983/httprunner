@@ -355,6 +355,19 @@
             <h3>SQL:</h3>
             <div style="overflow: auto">
               <table>
+                  {% for type, sql in meta_data.data.sql %}
+                  {% set sql_index = loop.index %}
+                  <tr>
+                      <th>#{{ sql_index }}</th>
+                      <td><pre>{{ sql }}</pre></td>
+                  </tr>
+                  {% endfor %}
+              </table>
+            </div>
+
+            <h3>Result:</h3>
+            <div style="overflow: auto">
+              <table>
                   <tr>
                       <td>{{ meta_data.data.sql }}</td>
                   </tr>
