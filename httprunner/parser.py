@@ -5,7 +5,7 @@ import builtins
 import os
 import re
 
-from httprunner import exceptions, utils, validator
+from httprunner import exceptions, utils, validator, logger
 from httprunner.compat import basestring, builtin_str, numeric_types, str
 
 # use $$ to escape $ notation
@@ -502,7 +502,9 @@ class LazyString(object):
                 var_name = var_match.group(1) or var_match.group(2)
                 # check if any variable undefined in check_variables_set
                 if var_name not in self.check_variables_set:
-                    raise exceptions.VariableNotFound(var_name)
+                    # CHANGED By(gy.wang): Don't raise VariableNotFound or else report will be not generated
+                    # raise exceptions.VariableNotFound(var_name)
+                    logger.log_warning("Variable not found: {}".format("var_name"))
 
                 self._args.append(var_name)
                 match_start_position = var_match.end()

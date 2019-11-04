@@ -384,6 +384,18 @@
             <div class="popup">
               <h2>Traceback Message</h2>
               <a class="close" href="#record_{{record_index}}">&times;</a>
+              {% if record.error %}
+              <div style="overflow: auto">
+                <table>
+                  <tr>
+                    {% if record.error.type == 'VariableNotFound' %}
+                    <th>Variable not found</th>
+                    {% endif %}
+                    <td>{{ record.error.value }}</td>
+                  </tr>
+                </table>
+              </div>
+              {% endif %}
               <div class="content"><pre>{{ record.attachment | e }}</pre></div>
             </div>
           </div>

@@ -10,7 +10,7 @@ from collections import Iterable
 from datetime import datetime
 
 import requests
-from httprunner import __version__, loader, logger
+from httprunner import __version__, loader, logger, exceptions
 from httprunner.compat import basestring, bytes, json, numeric_types
 from jinja2 import Template, escape
 
@@ -324,13 +324,21 @@ class HtmlTestResult(unittest.TextTestResult):
         super(HtmlTestResult, self).__init__(stream, descriptions, verbosity)
         self.records = []
 
-    def _record_test(self, test, status, attachment=''):
+    def _record_test(self, test, status, attachment='', exception=None):
         data = {
             'name': test.shortDescription(),
             'status': status,
             'attachment': attachment,
             "meta_datas": test.meta_datas
         }
+
+        if exception:
+            if isinstance(exception[1], exceptions.VariableNotFound):
+                data['error'] = {
+                    'type': 'VariableNotFound',
+                    'value': exception[1].args[0].replace(' is not found.', '')
+                }
+
         self.records.append(data)
 
     def startTestRun(self):
@@ -349,7 +357,7 @@ class HtmlTestResult(unittest.TextTestResult):
 
     def addError(self, test, err):
         super(HtmlTestResult, self).addError(test, err)
-        self._record_test(test, 'error', self._exc_info_to_string(err, test))
+        self._record_test(test, 'error', self._exc_info_to_string(err, test), err)
         print("")
 
     def addFailure(self, test, err):
