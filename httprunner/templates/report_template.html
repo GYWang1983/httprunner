@@ -365,7 +365,7 @@
                 <h3>Result:</h3>
                 <div style="overflow: auto">
                   {% set result = meta_data.data.result %}
-                  {% if result.is_select() %}
+                  {% if result and result.is_select() %}
                   <table>
                       <tr>
                           {% for name in result.keys() %}
