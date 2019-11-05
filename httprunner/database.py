@@ -82,7 +82,7 @@ class SqlRunner(object):
         self.meta_data["data"]["connection"]["user"] = user
 
         conn = None
-        result = None
+        resp = None
 
         try:
             conn_str = "{}://{}@{}".format(sqlalchemy_dialect_mapping.get(dialect.lower()), auth, url)
@@ -92,8 +92,8 @@ class SqlRunner(object):
 
             for sql_type, sql in sql_array:
                 result = conn.execute(sql)
+                resp = DatabaseResult(result, sql_type)
 
-            resp = DatabaseResult(result)
             self.meta_data["data"]["result"] = resp
             return resp
 
@@ -109,11 +109,13 @@ class SqlRunner(object):
 
 class DatabaseResult(ResponseObject):
 
-    def __init__(self, result):
+    def __init__(self, result, type):
         super().__init__(result)
+        self.type = type
         self.resp_obj = result
-        self.rows = result.fetchall()
         self.count = result.rowcount
+        if type == 'SELECT':
+            self.rows = result.fetchall()
 
     def __getattr__(self, key):
         return self._extract_field_with_delimiter(key)
@@ -237,12 +239,20 @@ class DatabaseResult(ResponseObject):
             #     logger.log_warning(err_msg)
             #     return None
 
+            # TODO: error
+
         # others
         else:
             err_msg = u"Failed to extract attribute from database result! => {}\n".format(field)
             err_msg += u"available attributes: count, result, top, first.\n\n"
             logger.log_error(err_msg)
             raise exceptions.ParamsError(err_msg)
+
+    def is_select(self):
+        return self.type == 'SELECT'
+
+    def keys(self):
+        return self.resp_obj.keys() if self.is_select() else []
 
     def log_error_message(self, query_data):
         # TODO: log detail messages when error occurs

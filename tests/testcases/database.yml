@@ -12,10 +12,10 @@ teststeps:
       connection:
          url: localhost/test
          user: root
-      #sql: SELECT * FROM `case`;
-      sql: |
-        INSERT INTO `demo` values (1, 2, 3);
-        INSERT INTO `demo` values (2, 5, 6);
+      sql: SELECT * FROM `case`;
+#      sql: |
+#        INSERT INTO `demo` values (1, 2, 3);
+#        INSERT INTO `demo` values (2, 5, 6);
     validate:
         - eq: ["count", 4]
     extract:
@@ -25,4 +25,28 @@ teststeps:
 #        - table: [user]
         #- sql: "SELECT 1"
         #- script: sql/export.sql
+-
+    name: API-STEP(2)
+    id: 4
+    request:
+      url: http://test.zpd.bestbeefresh.com:8080/castlemock/mock/rest/project/tIPqUC/application/FD2n2g/info
+      method: GET
+      headers:
+        api-version: api/1.0
+        content-type: application/json+api
+        x-forward-for: api/enable
+      params:
+        q1: api1
+        q2: api2
+    extract:
+      token: content.api-token
+      result_code: status_code
+    validate:
+    - string_equals:
+      - status_code
+      - '200'
+    - string_equals:
+      - $token
+      - '123456'
+
 
