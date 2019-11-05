@@ -10,14 +10,14 @@ teststeps:
     database:
       dialect: mysql
       connection:
-         url: localhost/test
+         url: mysql://localhost/test
          user: root
       sql: SELECT * FROM `case`;
-    validate:
-        - eq: ["count", 4]
     extract:
         - count: count
         - name: first.name
+    validate:
+        - str_eq: ["$name", 'Case5']
 #    export:
 #        - table: [user]
         #- sql: "SELECT 1"

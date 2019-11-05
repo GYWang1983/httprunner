@@ -87,6 +87,10 @@ class SqlRunner(object):
         start_connect_timestamp = time.time()
 
         try:
+            url_parts = url.split('://')
+            if len(url_parts) >= 2:
+                url = url_parts[1]
+
             conn_str = "{}://{}@{}".format(sqlalchemy_dialect_mapping.get(dialect.lower()), auth, url)
             logger.log_debug("connect to database: {}".format(conn_str))
 
