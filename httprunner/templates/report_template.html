@@ -195,7 +195,7 @@
     <tr>
       <th>Status</th>
       <th colspan="2">Name</th>
-      <th>Response Time</th>
+      <th>Elapsed Time</th>
       <th>Detail</th>
     </tr>
 
@@ -219,9 +219,7 @@
 
             <div class="content">
               <h3>Name: {{ meta_data.name }}</h3>
-
               {% for req_resp in meta_data.data %}
-
               {% if loop.index > 1 %}
               <div class="separator">==================================== redirect to ====================================</div>
               {% endif %}
@@ -377,7 +375,7 @@
                       {% for row in result.rows %}
                       <tr>
                           {% for key, value in row.items() %}
-                          <td>{{ value }}</td>
+                          <td>{% if value is not none %}{{ value }}{% else %}<i>(null)</i>{% endif %}</td>
                           {% endfor %}
                       </tr>
                       {% endfor %}
@@ -440,7 +438,6 @@
             </div>
           </div>
         {% endif %}
-
       </td>
     </tr>
   {% endfor %}

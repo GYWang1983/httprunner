@@ -1,3 +1,4 @@
+import time
 import sqlparse
 from sqlalchemy import create_engine
 from sqlalchemy import exc
@@ -83,16 +84,20 @@ class SqlRunner(object):
 
         conn = None
         resp = None
+        start_connect_timestamp = time.time()
 
         try:
             conn_str = "{}://{}@{}".format(sqlalchemy_dialect_mapping.get(dialect.lower()), auth, url)
             logger.log_debug("connect to database: {}".format(conn_str))
+
             engine = create_engine(conn_str)
             conn = engine.connect()
 
+            start_exec_timestamp = time.time()
             for sql_type, sql in sql_array:
                 result = conn.execute(sql)
-                resp = DatabaseResult(result, sql_type)
+                resp = DatabaseResult(self.meta_data, result, sql_type)
+            self.meta_data['stat']['response_time_ms'] = round((time.time() - start_exec_timestamp) * 1000, 2)
 
             self.meta_data["data"]["result"] = resp
             return resp
@@ -105,12 +110,14 @@ class SqlRunner(object):
         finally:
             if conn:
                 conn.close()
+                self.meta_data['stat']['elapsed_ms'] = round((time.time() - start_connect_timestamp) * 1000, 2)
 
 
 class DatabaseResult(ResponseObject):
 
-    def __init__(self, result, type):
+    def __init__(self, meta, result, type):
         super().__init__(result)
+        self.meta_data = meta
         self.type = type
         self.resp_obj = result
         self.count = result.rowcount
@@ -118,7 +125,10 @@ class DatabaseResult(ResponseObject):
             self.rows = result.fetchall()
 
     def __getattr__(self, key):
-        return self._extract_field_with_delimiter(key)
+        if key in ('meta_data', 'type'):
+            return getattr(key)
+        else:
+            return self._extract_field_with_delimiter(key)
         # try:
         #     value = getattr(self.resp_obj, key)
         #     return value
@@ -202,8 +212,10 @@ class DatabaseResult(ResponseObject):
                 else:
                     # 'result.{num}.{col}' -> a column value
                     return self._value(int(path[1]), path[2])
-
-            # TODO: error
+            else:
+                err_msg = u"Failed to extract attribute from result set! => {}\n".format(field)
+                logger.log_warning(err_msg)
+                return None
 
         elif path[0] == 'top':
             if len(path) == 1:
@@ -212,35 +224,22 @@ class DatabaseResult(ResponseObject):
             elif path[1].isdigit():
                 # 'top.{num}' -> top n row in dict
                 return self._top_records(int(path[1]))
-
-            # TODO: error
+            else:
+                err_msg = u"Failed to extract attribute from result set! => {}\n".format(field)
+                logger.log_warning(err_msg)
+                return None
 
         elif path[0] == 'first':
             if len(path) == 1:
                 # 'first' -> first row in dict
                 return self._record(0)
-            else:
+            elif len(path) == 2:
                 # 'first.{col}' -> column value in first row
                 return self._value(0, path[1])
-
-            # if isinstance(body, (dict, list)):
-            #     # content = {"xxx": 123}, content.xxx
-            #     return utils.query_json(body, sub_query)
-            # elif sub_query.isdigit():
-            #     # content = "abcdefg", content.3 => d
-            #     return utils.query_json(body, sub_query)
-            # else:
-            #     # content = "<html>abcdefg</html>", content.xxx
-            #     err_msg = u"Failed to extract attribute from response body! => {}\n".format(field)
-            #     err_msg += u"response body: {}\n".format(body)
-            #     # CHANGED BY gy.wang: extract failure not cause case failure
-            #     # logger.log_error(err_msg)
-            #     # raise exceptions.ExtractFailure(err_msg)
-            #     logger.log_warning(err_msg)
-            #     return None
-
-            # TODO: error
-
+            else:
+                err_msg = u"Failed to extract attribute from result set! => {}\n".format(field)
+                logger.log_warning(err_msg)
+                return None
         # others
         else:
             err_msg = u"Failed to extract attribute from database result! => {}\n".format(field)
@@ -255,5 +254,20 @@ class DatabaseResult(ResponseObject):
         return self.resp_obj.keys() if self.is_select() else []
 
     def log_error_message(self, query_data):
-        # TODO: log detail messages when error occurs
-        pass
+        err_msg = "{} DETAILED REQUEST & RESPONSE {}\n".format("*" * 32, "*" * 32)
+
+        # log connection
+        connection = self.meta_data['data']['connection']
+        if connection:
+            err_msg += "====== connection details ======\n"
+            err_msg += "dialect: {}\n".format(connection['dialect'])
+            err_msg += "url: {}\n".format(connection['url'])
+            err_msg += "user: {}\n".format(connection['user'])
+            err_msg += "\n"
+
+        # log error
+        if 'error' in self.meta_data:
+            err_msg += "====== errors ======\n"
+            err_msg += self.meta_data['error']
+            err_msg += "\n"
+        logger.log_error(err_msg)
