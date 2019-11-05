@@ -13,9 +13,6 @@ teststeps:
          url: localhost/test
          user: root
       sql: SELECT * FROM `case`;
-#      sql: |
-#        INSERT INTO `demo` values (1, 2, 3);
-#        INSERT INTO `demo` values (2, 5, 6);
     validate:
         - eq: ["count", 4]
     extract:
@@ -25,6 +22,31 @@ teststeps:
 #        - table: [user]
         #- sql: "SELECT 1"
         #- script: sql/export.sql
+-
+    name: insert database
+    database:
+      dialect: mysql
+      connection:
+         url: localhost/test
+         user: root
+      sql: |
+        TRUNCATE `demo`;
+        INSERT INTO `demo` values (1, 2, 3);
+        INSERT INTO `demo` values (2, 5, 6);
+        UPDATE `demo` SET col2 = 0 WHERE id = 2;
+    extract:
+        - count: count
+        - name: first.name
+-
+    name: check database
+    database:
+      dialect: mysql
+      connection:
+         url: localhost/test
+         user: root
+      sql: SELECT col2 FROM `demo` WHERE id = 2;
+    validate:
+        - eq: ["first.0", 0]
 -
     name: API-STEP(2)
     id: 4

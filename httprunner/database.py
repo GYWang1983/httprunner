@@ -68,8 +68,8 @@ class SqlRunner(object):
         statements = sqlparse.parse(query.get('sql'))
         for stmt in statements:
             sql_type = stmt.get_type()
-            if sql_type != 'UNKNOWN':
-                sql = sqlparse.format(stmt.value, strip_comments=True, strip_whitespace=True)
+            sql = sqlparse.format(stmt.value, strip_comments=True, strip_whitespace=True)
+            if sql:
                 sql_array.append((sql_type, sql))
 
         if not sql_array:
@@ -95,8 +95,16 @@ class SqlRunner(object):
 
             start_exec_timestamp = time.time()
             for sql_type, sql in sql_array:
-                result = conn.execute(sql)
-                resp = DatabaseResult(self.meta_data, result, sql_type)
+                if sql_type != 'UNKNOWN':
+                    result = conn.execute(sql)
+                    resp = DatabaseResult(self.meta_data, result, sql_type)
+                else:
+                    # Try to run
+                    try:
+                        conn.execute(sql)
+                    except:
+                        pass
+
             self.meta_data['stat']['response_time_ms'] = round((time.time() - start_exec_timestamp) * 1000, 2)
 
             self.meta_data["data"]["result"] = resp
@@ -175,6 +183,8 @@ class DatabaseResult(ResponseObject):
                 "top" (equals to first)
                 "top.1"
         """
+        if self.type != 'SELECT':
+            return None
 
         path = field.split('.')
 
