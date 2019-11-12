@@ -7,7 +7,11 @@ from httprunner import exceptions, logger
 from httprunner.response import ResponseObject
 
 sqlalchemy_dialect_mapping = {
-    'mysql': 'mysql+pymysql'
+    'mysql': 'mysql+pymysql',
+    'oracle': 'oracle+cx_oracle',
+    'db2': 'ibm_db_sa',
+    'mssql': 'mssql+pyodbc',
+    'postgresql': 'postgresql+psycopg2'
 }
 
 
