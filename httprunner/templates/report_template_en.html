@@ -1,7 +1,7 @@
 <head>
   <meta content="text/html; charset=utf-8" http-equiv="content-type" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>测试报告</title>
+  <title>{{html_report_name}} - TestReport</title>
   <style>
     body {
       background-color: #f2f2f2;
@@ -149,73 +149,61 @@
 </head>
 
 <body>
-  <h1>测试报告</h1>
+  <h1>Test Report: {{html_report_name}}</h1>
 
-  <h2>摘要</h2>
+  <h2>Summary</h2>
   <table id="summary">
     <tr>
-      <th>开始时间</th>
+      <th>START AT</th>
       <td colspan="4">{{time.start_datetime}}</td>
     </tr>
     <tr>
-      <th>执行时间</th>
+      <th>DURATION</th>
       <td colspan="4">{{ '%0.3f'| format(time.duration|float) }} seconds</td>
     </tr>
     <tr>
-      <th>系统信息</th>
+      <th>PLATFORM</th>
       <td>HttpRunner {{ platform.httprunner_version }} </td>
       <td>{{ platform.python_version }} </td>
       <td colspan="2">{{ platform.platform }}</td>
     </tr>
     <tr>
-      <th>统计</th>
-      <th colspan="2">测试用例 (成功/失败)</th>
-      <th colspan="2">测试步骤 (成功/失败/错误/跳过)</th>
+      <th>STAT</th>
+      <th colspan="2">TESTCASES (success/fail)</th>
+      <th colspan="2">TESTSTEPS (success/fail/error/skip)</th>
     </tr>
     <tr>
-      <td>小计</td>
+      <td>total (details) =></td>
       <td colspan="2">{{stat.testcases.total}} ({{stat.testcases.success}}/{{stat.testcases.fail}})</td>
       <td colspan="2">{{stat.teststeps.total}} ({{stat.teststeps.successes}}/{{stat.teststeps.failures}}/{{stat.teststeps.errors}}/{{stat.teststeps.skipped}})</td>
     </tr>
   </table>
 
-  <h2>详细信息</h2>
+  <h2>Details</h2>
 
   {% for test_suite_summary in details %}
   {% set suite_index = loop.index %}
-  <h3>用例: {{test_suite_summary.name}}</h3>
+  <h3>{{test_suite_summary.name}}</h3>
   <table id="suite_{{suite_index}}" class="details">
     <tr>
-      <td>步骤总数: {{test_suite_summary.stat.total}}</td>
-      <td>成功: {{test_suite_summary.stat.successes}}</td>
-      <td>失败: {{test_suite_summary.stat.failures}}</td>
-      <td>错误: {{test_suite_summary.stat.errors}}</td>
-      <td>跳过: {{test_suite_summary.stat.skipped}}</td>
+      <td>TOTAL: {{test_suite_summary.stat.total}}</td>
+      <td>SUCCESS: {{test_suite_summary.stat.successes}}</td>
+      <td>FAILED: {{test_suite_summary.stat.failures}}</td>
+      <td>ERROR: {{test_suite_summary.stat.errors}}</td>
+      <td>SKIPPED: {{test_suite_summary.stat.skipped}}</td>
     </tr>
     <tr>
-      <th>状态</th>
-      <th colspan="2">名称</th>
-      <th>执行时间</th>
-      <th>详情</th>
+      <th>Status</th>
+      <th colspan="2">Name</th>
+      <th>Elapsed Time</th>
+      <th>Detail</th>
     </tr>
 
     {% for record in test_suite_summary.records %}
     {% set record_index = "{}_{}".format(suite_index, loop.index) %}
     {% set record_meta_datas = record.meta_datas_expanded %}
     <tr id="record_{{record_index}}">
-      <th class="{{record.status}}" style="width:5em;">
-        {% if record.status == 'success' %}
-          成功
-        {% elif record.status == 'failure' %}
-          失败
-        {% elif record.status == 'error' %}
-          错误
-        {% elif record.status == 'skip' %}
-          跳过
-        {% else %}
-          {{record.status}}
-        {% endif %}
-      </th>
+      <th class="{{record.status}}" style="width:5em;">{{record.status}}</th>
       <td colspan="2">{{record.name}}</td>
       <td style="text-align:center;width:6em;">{{ record.response_time }} ms</td>
       <td class="detail">
@@ -226,11 +214,11 @@
         <div id="popup_log_{{meta_data_index}}" class="overlay">
           <div class="popup">
             {% if meta_data.type == 'http' %}
-            <h2>请求响应数据</h2>
+            <h2>Request and Response data</h2>
             <a class="close" href="#record_{{meta_data_index}}">&times;</a>
 
             <div class="content">
-              <h3>名称: {{ meta_data.name }}</h3>
+              <h3>Name: {{ meta_data.name }}</h3>
               {% for req_resp in meta_data.data %}
               {% if loop.index > 1 %}
               <div class="separator">==================================== redirect to ====================================</div>
@@ -289,14 +277,14 @@
               </div>
               {% endfor %}
 
-              <h3>结果校验:</h3>
+              <h3>Validators:</h3>
               <div style="overflow: auto">
                   <table>
                     <tr>
-                      <th>校验项</th>
-                      <th>比较操作</th>
-                      <th>预期结果</th>
-                      <th>实际结果</th>
+                      <th>check</th>
+                      <th>comparator</th>
+                      <th>expect value</th>
+                      <th>actual value</th>
                     </tr>
                     {% for validator in meta_data.validators %}
                     <tr>
@@ -317,19 +305,19 @@
                   </table>
               </div>
 
-              <h3>统计信息:</h3>
+              <h3>Statistics:</h3>
               <div style="overflow: auto">
                 <table>
                   <tr>
-                      <th>响应体大小(bytes)</th>
+                      <th>content_size(bytes)</th>
                       <td>{{ meta_data.stat.content_size }}</td>
                     </tr>
                   <tr>
-                    <th>响应时间(ms)</th>
+                    <th>response_time(ms)</th>
                     <td>{{ meta_data.stat.response_time_ms }}</td>
                   </tr>
                   <tr>
-                    <th>总消耗时间(ms)</th>
+                    <th>elapsed(ms)</th>
                     <td>{{ meta_data.stat.elapsed_ms }}</td>
                   </tr>
                 </table>
@@ -337,10 +325,10 @@
 
             </div>
             {% else %}
-            <h2>数据库查询结果</h2>
+            <h2>Database Result</h2>
             <a class="close" href="#record_{{meta_data_index}}">&times;</a>
             <div class="content">
-                <h3>名称: {{ meta_data.name }}</h3>
+                <h3>Name: {{ meta_data.name }}</h3>
 
                 <h3>Connection:</h3>
                 {% set conn = meta_data.data.connection %}
@@ -374,7 +362,7 @@
                   </table>
                 </div>
 
-                <h3>查询结果:</h3>
+                <h3>Result:</h3>
                 <div style="overflow: auto">
                   {% set result = meta_data.data.result %}
                   {% if result and result.is_select() %}
@@ -395,14 +383,14 @@
                   {% endif %}
                 </div>
 
-                <h3>结果校验:</h3>
+                <h3>Validators:</h3>
                 <div style="overflow: auto">
                   <table>
                     <tr>
-                      <th>校验项</th>
-                      <th>比较操作</th>
-                      <th>预期结果</th>
-                      <th>实际结果</th>
+                      <th>check</th>
+                      <th>comparator</th>
+                      <th>expect value</th>
+                      <th>actual value</th>
                     </tr>
                     {% for validator in meta_data.validators %}
                     <tr>
@@ -432,14 +420,14 @@
           <a class="button" href="#popup_attachment_{{record_index}}">traceback</a>
           <div id="popup_attachment_{{record_index}}" class="overlay">
             <div class="popup">
-              <h2>错误日志</h2>
+              <h2>Traceback Message</h2>
               <a class="close" href="#record_{{record_index}}">&times;</a>
               {% if record.error %}
               <div style="overflow: auto">
                 <table>
                   <tr>
                     {% if record.error.type == 'VariableNotFound' %}
-                    <th>变量未设置</th>
+                    <th>Variable not found</th>
                     {% endif %}
                     <td>{{ record.error.value }}</td>
                   </tr>
