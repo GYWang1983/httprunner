@@ -2,6 +2,7 @@ import collections
 import copy
 import csv
 import importlib
+import types
 import io
 import json
 import os
@@ -9,6 +10,7 @@ import sys
 
 import yaml
 from httprunner import built_in, exceptions, logger, parser, utils, validator
+from httprunner.plugin import PluginBase
 
 try:
     # PyYAML version >= 5.1
@@ -287,6 +289,25 @@ def load_debugtalk_functions():
     # load debugtalk.py module
     imported_module = importlib.import_module("debugtalk")
     return load_module_functions(imported_module)
+
+
+###############################################################################
+##   plugin scripts module loader
+###############################################################################
+
+def load_plugin_classes():
+    plugins = dict()
+    for file in os.listdir("scripts"):
+        if file.endswith(".py"):
+            module = file[:-3]
+            imported_module = importlib.import_module("scripts." + module)
+            for name, item in vars(imported_module).items():
+                if type(item) == type:
+                    clz = types.new_class(name, (item,), kwds={"metaclass": PluginBase})
+                    plugins[module] = clz
+                    break
+
+    return plugins
 
 
 ###############################################################################
@@ -803,6 +824,9 @@ def load_project_tests(test_path, dot_env_path=None):
     project_mapping["PWD"] = project_working_directory
     built_in.PWD = project_working_directory
     project_mapping["functions"] = debugtalk_functions
+
+    # load plugin classes
+    project_mapping["plugins"] = load_plugin_classes()
 
     # load api
     tests_def_mapping["api"] = load_api_folder(os.path.join(project_working_directory, "api"))
