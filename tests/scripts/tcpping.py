@@ -3,7 +3,7 @@ import struct
 import random
 import time
 import select
-from httprunner.exceptions import ScriptExecuteError
+
 
 
 class Tcpping:
@@ -11,29 +11,10 @@ class Tcpping:
     ICMP_ECHO_REQUEST = 8
     ICMP_CODE = socket.getprotobyname('icmp')
 
-    # def __init__(self):
-    #     super().__init__()
-
     def execute(self, params: dict):
-        """
-        Sends one ping to the given "dest_addr" which can be an ip or hostname.
-        "timeout" can be any integer or float except negatives and zero.
-        Returns either the delay (in seconds) or None on timeout and an invalid
-        address, respectively.
-        """
-        start = time.time()
 
         addr = params.get('url', '')
-        # print('addr=', addr)
-        try:
-            my_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, Tcpping.ICMP_CODE)
-        except socket.error as e:
-            raise ScriptExecuteError(e)
-
-        # try:
-        #     host = socket.gethostbyname(addr)
-        # except socket.gaierror as e:
-        #     raise ScriptExecuteError(e)
+        my_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, Tcpping.ICMP_CODE)
 
         # Maximum for an unsigned short int c object counts to 65535 so
         # we have to sure that our packet id is not greater than that.
@@ -49,8 +30,7 @@ class Tcpping:
         delay = self.receive_ping(my_socket, packet_id, time.time(), timeout)
         # print("response_time:", delay)
         if delay:
-            self.meta_data['stat']['response_time_ms'] = int(delay * 1000)
-        self.meta_data['stat']['elapsed_ms'] = int((time.time() - start) * 1000)
+            self.response_time(delay)
 
         my_socket.close()
         return delay

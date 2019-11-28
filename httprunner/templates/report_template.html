@@ -336,7 +336,7 @@
               </div>
 
             </div>
-            {% else %}
+            {% elif meta_data.type == 'database' %}
             <h2>数据库查询结果</h2>
             <a class="close" href="#record_{{meta_data_index}}">&times;</a>
             <div class="content">
@@ -393,6 +393,54 @@
                       {% endfor %}
                   </table>
                   {% endif %}
+                </div>
+
+                <h3>结果校验:</h3>
+                <div style="overflow: auto">
+                  <table>
+                    <tr>
+                      <th>校验项</th>
+                      <th>比较操作</th>
+                      <th>预期结果</th>
+                      <th>实际结果</th>
+                    </tr>
+                    {% for validator in meta_data.validators %}
+                    <tr>
+                      {% if validator.check_result == "pass" %}
+                      <td class="passed">
+                      {% elif validator.check_result == "fail" %}
+                      <td class="failed">
+                      {% elif validator.check_result == "unchecked" %}
+                      <td class="unchecked">
+                      {% endif %}
+                        {{validator.check | e}}
+                      </td>
+                      <td>{{validator.comparator}}</td>
+                      <td>{{validator.expect | e}}</td>
+                      <td>{{validator.check_value | e}}</td>
+                    </tr>
+                    {% endfor %}
+                  </table>
+                </div>
+            </div>
+            {% else %}
+            <h2>脚本执行结果</h2>
+            <a class="close" href="#record_{{meta_data_index}}">&times;</a>
+            <div class="content">
+                <h3>名称: {{ meta_data.name }}</h3>
+                <h3>脚本: {{ meta_data.script }}</h3>
+                <h3>参数:</h3>
+                {% set params = meta_data.params %}
+                <div style="overflow: auto">
+                    <table>
+                      {% for key, value in params.items() %}
+                      <tr>
+
+                        <th>{{ key }}</th>
+                        <td>{{ value }}</td>
+                      </tr>
+                      {% endfor %}
+                    </table>
                 </div>
 
                 <h3>结果校验:</h3>

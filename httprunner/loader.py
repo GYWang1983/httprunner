@@ -304,18 +304,6 @@ def load_plugin_classes(pwd):
             for name, item in vars(imported_module).items():
                 if type(item) == type and 'execute' in dir(item):
                     clz = type(name, (item, PluginBase), dict(module=module))
-                    # clz = type(name, (item,), {
-                    #     'meta_data': {
-                    #         'type': "plugin",
-                    #         'script': module,
-                    #         'stat': {
-                    #             'content_size': "N/A",
-                    #             'response_time_ms': "N/A",
-                    #             'elapsed_ms': "N/A",
-                    #         }
-                    #     },
-                    #     'response': PluginResponse()
-                    # })
                     plugins[module] = clz
                     break
 
