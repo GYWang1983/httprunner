@@ -13,6 +13,9 @@ class Tcpping:
 
     def execute(self, params: dict):
 
+        # self.response_time(0)
+        # return {'time': 0}
+
         addr = params.get('url', '')
         my_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, Tcpping.ICMP_CODE)
 
@@ -30,10 +33,11 @@ class Tcpping:
         delay = self.receive_ping(my_socket, packet_id, time.time(), timeout)
         # print("response_time:", delay)
         if delay:
-            self.response_time(delay)
+            self.response_time(delay * 1000)
 
         my_socket.close()
-        return delay
+
+        return dict(time=delay)
 
     def create_packet(self, id):
         """Create a new echo request packet based on the given "id"."""

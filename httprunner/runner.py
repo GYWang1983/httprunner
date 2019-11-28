@@ -257,7 +257,7 @@ class Runner(object):
             if not module or module not in self.plugins:
                 raise exceptions.ParamsError("{} plugin not found".format(module))
             self.plugin_runner = self.plugins[module]()
-            self.plugin_runner.run(plugin_dict, test_name)
+            resp_obj = self.plugin_runner.run(plugin_dict, test_name)
         else:
             # http request
             # parse test request

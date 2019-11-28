@@ -443,6 +443,11 @@
                     </table>
                 </div>
 
+                <h3>执行结果:</h3>
+                <div style="overflow: auto">
+                    <pre>{{ meta_data.result }}</pre>
+                </div>
+
                 <h3>结果校验:</h3>
                 <div style="overflow: auto">
                   <table>
@@ -470,6 +475,23 @@
                     {% endfor %}
                   </table>
                 </div>
+                <h3>统计信息:</h3>
+                  <div style="overflow: auto">
+                    <table>
+                      <tr>
+                          <th>响应体大小(bytes)</th>
+                          <td>{{ meta_data.stat.content_size }}</td>
+                        </tr>
+                      <tr>
+                        <th>响应时间(ms)</th>
+                        <td>{{ meta_data.stat.response_time_ms }}</td>
+                      </tr>
+                      <tr>
+                        <th>总消耗时间(ms)</th>
+                        <td>{{ meta_data.stat.elapsed_ms }}</td>
+                      </tr>
+                    </table>
+                  </div>
             </div>
             {% endif %}
           </div>
