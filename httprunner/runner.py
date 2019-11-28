@@ -15,6 +15,7 @@ class Runner(object):
         >>> tests_mapping = {
                 "project_mapping": {
                     "functions": {}
+                    "plugins": {}
                 },
                 "testcases": [
                     {
@@ -45,7 +46,7 @@ class Runner(object):
 
     """
 
-    def __init__(self, config, http_client_session=None):
+    def __init__(self, config, plugins=None, http_client_session=None):
         """ run testcase or testsuite.
 
         Args:
@@ -61,6 +62,7 @@ class Runner(object):
             http_client_session (instance): requests.Session(), or locust.client.Session() instance.
 
         """
+
         self.verify = config.get("verify", True)
         self.export = config.get("export") or config.get("output", [])
         self.validation_results = []
@@ -74,6 +76,8 @@ class Runner(object):
         self.http_client_session = http_client_session or HttpSession()
         self.session_context = SessionContext(config_variables)
         self.sql_runner = SqlRunner()
+        self.plugin_runner = None
+        self.plugins = plugins if plugins else {}
 
         if testcase_setup_hooks:
             self.do_hook_actions(testcase_setup_hooks, "setup")
@@ -100,6 +104,8 @@ class Runner(object):
         # CHANGED BY gy.wang: meta data for database
         if "database" in test_dict:
             meta_data = self.sql_runner.meta_data
+        elif "plugin" in test_dict:
+            meta_data = self.plugin_runner.meta_data
         else:
             meta_data = self.http_client_session.meta_data
 
@@ -245,6 +251,13 @@ class Runner(object):
 
             resp_obj = self.sql_runner.execute(parsed_test_data, test_name)
 
+        elif test_type == 'plugin':
+            plugin_dict = test_dict.get('plugin', {})
+            module = plugin_dict['script']
+            if not module or module not in self.plugins:
+                raise exceptions.ParamsError("{} plugin not found".format(module))
+            self.plugin_runner = self.plugins[module]()
+            self.plugin_runner.execute(plugin_dict)
         else:
             # http request
             # parse test request
@@ -310,6 +323,8 @@ class Runner(object):
     def _test_step_type(self, testcase_dict):
         if 'database' in testcase_dict:
             testcase_dict['type'] = 'database'
+        elif 'plugin' in testcase_dict:
+            testcase_dict['type'] = 'plugin'
         else:
             testcase_dict['type'] = 'http'
 
@@ -322,7 +337,7 @@ class Runner(object):
         config = testcase_dict.get("config", {})
 
         # each teststeps in one testcase (YAML/JSON) share the same session.
-        test_runner = Runner(config, self.http_client_session)
+        test_runner = Runner(config, self.plugins, self.http_client_session)
 
         tests = testcase_dict.get("teststeps", [])
 
@@ -390,9 +405,6 @@ class Runner(object):
             test_dict["config"]["variables"].update(
                 self.session_context.session_variables_mapping)
             self._run_testcase(test_dict)
-        if "plugin" in test_dict:
-            # TODO(gy.wang): switch types of test step
-            pass
         else:
             # api
             try:

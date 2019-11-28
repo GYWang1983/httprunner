@@ -37,6 +37,7 @@ class HttpRunner(object):
         self.report_dir = report_dir
         self._summary = None
         self.status_file = status_file
+        self.plugins = {}
 
     def _add_tests(self, testcases):
         """ initialize testcase with Runner() and add to test suite.
@@ -84,7 +85,7 @@ class HttpRunner(object):
         test_suite = unittest.TestSuite()
         for testcase in testcases:
             config = testcase.get("config", {})
-            test_runner = runner.Runner(config)
+            test_runner = runner.Runner(config, self.plugins)
             TestSequense = type('TestSequense', (unittest.TestCase,), {})
 
             tests = testcase.get("teststeps", [])
@@ -203,6 +204,10 @@ class HttpRunner(object):
 
         if self.save_tests:
             utils.dump_logs(parsed_testcases, project_mapping, "parsed")
+
+        # bind plugins
+        if 'plugins' in project_mapping:
+            self.plugins = project_mapping.get('plugins')
 
         # add tests to test suite
         self.exception_stage = "add tests to test suite"

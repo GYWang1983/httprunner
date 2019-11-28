@@ -61,3 +61,6 @@ class TestcaseNotFound(NotFoundError):
 
 class DatabaseQueryError(MyBaseError):
     pass
+
+class ScriptExecuteError(MyBaseError):
+    pass

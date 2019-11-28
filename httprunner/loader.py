@@ -295,15 +295,27 @@ def load_debugtalk_functions():
 ##   plugin scripts module loader
 ###############################################################################
 
-def load_plugin_classes():
+def load_plugin_classes(pwd):
     plugins = dict()
-    for file in os.listdir("scripts"):
+    for file in os.listdir(os.path.join(pwd, "scripts")):
         if file.endswith(".py"):
             module = file[:-3]
             imported_module = importlib.import_module("scripts." + module)
             for name, item in vars(imported_module).items():
-                if type(item) == type:
-                    clz = types.new_class(name, (item,), kwds={"metaclass": PluginBase})
+                if type(item) == type and 'execute' in dir(item):
+                    clz = type(name, (item, PluginBase), dict(module=module))
+                    # clz = type(name, (item,), {
+                    #     'meta_data': {
+                    #         'type': "plugin",
+                    #         'script': module,
+                    #         'stat': {
+                    #             'content_size': "N/A",
+                    #             'response_time_ms': "N/A",
+                    #             'elapsed_ms': "N/A",
+                    #         }
+                    #     },
+                    #     'response': PluginResponse()
+                    # })
                     plugins[module] = clz
                     break
 
@@ -812,21 +824,20 @@ def load_project_tests(test_path, dot_env_path=None):
     # thus .env file should be loaded before loading debugtalk.py
     dot_env_path = dot_env_path or os.path.join(project_working_directory, ".env")
     project_mapping["env"] = load_dot_env_file(dot_env_path)
-
     if debugtalk_path:
         # load debugtalk.py functions
         debugtalk_functions = load_debugtalk_functions()
     else:
         debugtalk_functions = {}
 
+    # load plugin classes
+    project_mapping["plugins"] = load_plugin_classes(project_working_directory)
+
     # locate PWD and load debugtalk.py functions
 
     project_mapping["PWD"] = project_working_directory
     built_in.PWD = project_working_directory
     project_mapping["functions"] = debugtalk_functions
-
-    # load plugin classes
-    project_mapping["plugins"] = load_plugin_classes()
 
     # load api
     tests_def_mapping["api"] = load_api_folder(os.path.join(project_working_directory, "api"))

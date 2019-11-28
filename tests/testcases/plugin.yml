@@ -1,0 +1,29 @@
+config:
+    name: "check ping plugin"
+    variables:
+        uid: 9001
+        device_sn: "TESTCASE_CREATE_XXX"
+
+teststeps:
+-
+    name: check ping
+    plugin:
+      script: tcpping
+      url: 127.0.0.1
+      timeout: 5
+    extract:
+        - count: count
+        - name: first.name
+    validate:
+        - str_eq: ["$name", 'Case5']
+#    export:
+#        - table: [user]
+        #- sql: "SELECT 1"
+        #- script: sql/export.sql
+-
+    name: check ping
+    plugin:
+      script: tcpping
+      url: baidu.com
+      timeout: 5
+

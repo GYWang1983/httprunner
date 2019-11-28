@@ -6,16 +6,20 @@ class PluginResponse(ResponseObject):
         super().__init__({})
 
 
-class PluginBase(type):
-    meta_data = {
-        "type": "plugin",
-        "stat": {
-            "content_size": "N/A",
-            "response_time_ms": "N/A",
-            "elapsed_ms": "N/A",
-        }
-    }
+class PluginBase:
 
-    response = PluginResponse()
+    def __init__(self):
+
+        self.meta_data = {
+            "type": "plugin",
+            "stat": {
+                "content_size": "N/A",
+                "response_time_ms": "N/A",
+                "elapsed_ms": "N/A",
+            }
+        }
+
+        self.response = PluginResponse()
+
 
 
