@@ -30,7 +30,7 @@ class Tcpping:
             # below expects it, so we just give it a dummy port.
             sent = my_socket.sendto(packet, (addr, 1))
             packet = packet[sent:]
-        delay = self.receive_ping(my_socket, packet_id, time.time(), timeout)
+        delay = self.receive_ping(my_socket, packet_id, time.time(), int(timeout))
         # print("response_time:", delay)
         if delay:
             self.response_time(delay * 1000)

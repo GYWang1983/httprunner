@@ -297,15 +297,17 @@ def load_debugtalk_functions():
 
 def load_plugin_classes(pwd):
     plugins = dict()
-    for file in os.listdir(os.path.join(pwd, "scripts")):
-        if file.endswith(".py"):
-            module = file[:-3]
-            imported_module = importlib.import_module("scripts." + module)
-            for name, item in vars(imported_module).items():
-                if type(item) == type and 'execute' in dir(item):
-                    clz = type(name, (item, PluginBase), dict(module=module))
-                    plugins[module] = clz
-                    break
+    path = os.path.join(pwd, "scripts")
+    if os.path.exists(path):
+        for file in os.listdir(path):
+            if file.endswith(".py"):
+                module = file[:-3]
+                imported_module = importlib.import_module("scripts." + module)
+                for name, item in vars(imported_module).items():
+                    if type(item) == type and 'execute' in dir(item):
+                        clz = type(name, (item, PluginBase), dict(module=module))
+                        plugins[module] = clz
+                        break
 
     return plugins
 
