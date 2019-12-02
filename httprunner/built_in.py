@@ -102,6 +102,14 @@ def multipart_content_type(multipart_encoder):
     return multipart_encoder.content_type
 
 
+def is_number(s):
+    try:
+        complex(s)  # for int, long, float and complex
+    except ValueError:
+        return False
+
+    return True
+
 ###############################################################################
 ##  built-in comparators
 ###############################################################################
@@ -110,19 +118,34 @@ def equals(check_value, expect_value):
     assert check_value == expect_value
 
 def less_than(check_value, expect_value):
-    assert check_value < expect_value
+    try:
+        assert float(check_value) < float(expect_value)
+    except ValueError:
+        assert builtin_str(check_value) < builtin_str(expect_value)
 
 def less_than_or_equals(check_value, expect_value):
-    assert check_value <= expect_value
+    try:
+        assert float(check_value) <= float(expect_value)
+    except ValueError:
+        assert builtin_str(check_value) <= builtin_str(expect_value)
 
 def greater_than(check_value, expect_value):
-    assert check_value > expect_value
+    try:
+        assert float(check_value) > float(expect_value)
+    except ValueError:
+        assert builtin_str(check_value) > builtin_str(expect_value)
 
 def greater_than_or_equals(check_value, expect_value):
-    assert check_value >= expect_value
+    try:
+        assert float(check_value) >= float(expect_value)
+    except ValueError:
+        assert builtin_str(check_value) >= builtin_str(expect_value)
 
 def not_equals(check_value, expect_value):
-    assert check_value != expect_value
+    try:
+        assert float(check_value) != float(expect_value)
+    except ValueError:
+        assert builtin_str(check_value) != builtin_str(expect_value)
 
 def string_equals(check_value, expect_value):
     assert builtin_str(check_value) == builtin_str(expect_value)
