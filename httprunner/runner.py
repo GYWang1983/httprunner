@@ -253,11 +253,16 @@ class Runner(object):
 
         elif test_type == 'plugin':
             plugin_dict = test_dict.get('plugin', {})
-            module = plugin_dict['script']
+            parsed_test_data = self.session_context.eval_content(plugin_dict)
+            try:
+                module = parsed_test_data.get('script')
+            except KeyError:
+                raise exceptions.ParamsError("script not set in plugin step!")
+
             if not module or module not in self.plugins:
                 raise exceptions.ParamsError("{} plugin not found".format(module))
             self.plugin_runner = self.plugins[module]()
-            resp_obj = self.plugin_runner.run(plugin_dict, test_name)
+            resp_obj = self.plugin_runner.run(parsed_test_data, test_name)
         else:
             # http request
             # parse test request
