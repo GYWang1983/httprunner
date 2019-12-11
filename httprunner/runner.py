@@ -212,6 +212,8 @@ class Runner(object):
             exceptions.ExtractFailure
 
         """
+        global sqlalchemy_dialect_mapping
+
         # clear meta data first to ensure independence for each test
         self.__clear_test_data()
 
@@ -243,8 +245,7 @@ class Runner(object):
             except KeyError:
                 raise exceptions.ParamsError("dialect missed in database step!")
 
-            valid_dialect = ["mysql"]
-            if dialect.lower() not in valid_dialect:
+            if dialect.lower() not in sqlalchemy_dialect_mapping:
                 err_msg = u"Unsupported database! => {}\n".format(dialect)
                 logger.log_error(err_msg)
                 raise exceptions.ParamsError(err_msg)
