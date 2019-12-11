@@ -31,7 +31,17 @@ def gen_random_string(str_len):
     return ''.join(
         random.choice(string.ascii_letters + string.digits) for _ in range(str_len))
 
-def get_timestamp(str_len=13):
+def gen_random_int(min=0, max=100):
+    """ generate random integer
+    """
+    return random.randint(min, max)
+
+def gen_random_float(min=0, max=100):
+    """ generate random value
+    """
+    return random.uniform(min, max)
+
+def get_timestamp(str_len=10):
     """ get timestamp string, length can only between 0 and 16
     """
     if isinstance(str_len, integer_types) and 0 < str_len < 17:
@@ -40,6 +50,11 @@ def get_timestamp(str_len=13):
     raise ParamsError("timestamp length can only between 0 and 16.")
 
 def get_current_date(fmt="%Y-%m-%d"):
+    """ get current date, default format is %Y-%m-%d
+    """
+    return datetime.datetime.now().strftime(fmt)
+
+def get_current_time(fmt="%Y-%m-%d %H:%M:%S"):
     """ get current date, default format is %Y-%m-%d
     """
     return datetime.datetime.now().strftime(fmt)
@@ -211,6 +226,7 @@ def size(obj):
         elif isinstance(obj, ResultProxy):
             return obj.rowcount
     return 0
+
 
 
 """ built-in hooks
