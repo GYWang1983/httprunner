@@ -187,11 +187,19 @@ def length_less_than_or_equals(check_value, expect_value):
 
 def contains(check_value, expect_value):
     assert isinstance(check_value, (list, tuple, dict, basestring))
-    assert expect_value in check_value
+    try:
+        assert expect_value in check_value
+    except:
+        assert builtin_str(expect_value) in check_value
+
 
 def contained_by(check_value, expect_value):
     assert isinstance(expect_value, (list, tuple, dict, basestring))
-    assert check_value in expect_value
+    try:
+        assert check_value in expect_value
+    except:
+        assert builtin_str(check_value) in expect_value
+
 
 def type_match(check_value, expect_value):
     def get_type(name):
@@ -227,6 +235,9 @@ def size(obj):
             return obj.rowcount
     return 0
 
+
+def array(*args):
+    return list(map(lambda x: builtin_str(x) if not isinstance(x, basestring) else x, args))
 
 
 """ built-in hooks

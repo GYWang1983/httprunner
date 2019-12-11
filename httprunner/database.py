@@ -183,9 +183,9 @@ class DatabaseResult(ResponseObject):
             field (str): string joined by delimiter.
             e.g.
                 "count"
-                "record"
-                "record.0"
-                "record.0.col"
+                "result"
+                "result.0"
+                "result.0.col"
                 "first"
                 "first.col"
                 "top" (equals to first)

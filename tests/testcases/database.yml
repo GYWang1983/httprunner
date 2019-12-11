@@ -45,8 +45,12 @@ teststeps:
          url: localhost/test
          user: root
       sql: SELECT col2 FROM `demo` WHERE id = 2;
+    extract:
+        - rs: first
     validate:
         - eq: ["first.0", 0]
+        - eq: ["${size($rs)}", 1]
+        - contained_by: ["first.0", "${array(0,a,b,c)}"]
 -
     name: API-STEP(2)
     id: 4
