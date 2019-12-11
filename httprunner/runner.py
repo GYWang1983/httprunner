@@ -6,6 +6,7 @@ from httprunner import exceptions, logger, response, utils
 from httprunner.client import HttpSession
 from httprunner.context import SessionContext
 from httprunner.database import SqlRunner
+from httprunner.database import sqlalchemy_dialect_mapping
 
 
 class Runner(object):
@@ -212,7 +213,6 @@ class Runner(object):
             exceptions.ExtractFailure
 
         """
-        global sqlalchemy_dialect_mapping
 
         # clear meta data first to ensure independence for each test
         self.__clear_test_data()
