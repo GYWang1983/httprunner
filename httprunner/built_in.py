@@ -227,6 +227,14 @@ def endswith(check_value, expect_value):
     assert builtin_str(check_value).endswith(builtin_str(expect_value))
 
 
+def is_null(check_value):
+    assert check_value is None
+
+
+def not_null(check_value):
+    assert check_value is not None
+
+
 def size(obj):
     if obj:
         if isinstance(obj, (list, tuple, dict, basestring)):
