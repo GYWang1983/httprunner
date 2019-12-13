@@ -53,6 +53,20 @@ teststeps:
         - contained_by: ["first.0", "${array(0,a,b,c)}"]
         - contains: ["${str($rs)}", 100]
 -
+    name: check null
+    database:
+      dialect: mysql
+      connection:
+         url: localhost/test
+         user: root
+      sql: SELECT NULL as c1, 1 as c2;
+    extract:
+        - rs: first
+    validate:
+        - is_null: ["first.c1"]
+        - not_null: ["first.c2"]
+        - not_null: ["first.c1"]
+-
     name: API-STEP(2)
     id: 4
     request:

@@ -208,10 +208,16 @@ def uniform_validator(validator):
         comparator = list(validator.keys())[0]
         compare_values = validator[comparator]
 
-        if not isinstance(compare_values, list) or len(compare_values) != 2:
+        if not isinstance(compare_values, list):
             raise exceptions.ParamsError("invalid validator: {}".format(validator))
 
-        check_item, expect_value = compare_values
+        if len(compare_values) == 2:
+            check_item, expect_value = compare_values
+        elif len(compare_values) == 1:
+            check_item, expect_value = compare_values[0], None
+        else:
+            raise exceptions.ParamsError("invalid validator: {}".format(validator))
+
 
     else:
         raise exceptions.ParamsError("invalid validator: {}".format(validator))
