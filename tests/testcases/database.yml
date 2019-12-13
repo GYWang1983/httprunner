@@ -51,6 +51,7 @@ teststeps:
         - eq: ["first.0", 0]
         - eq: ["${size($rs)}", 1]
         - contained_by: ["first.0", "${array(0,a,b,c)}"]
+        - contains: ["${str($rs)}", 100]
 -
     name: API-STEP(2)
     id: 4
@@ -74,5 +75,8 @@ teststeps:
     - string_equals:
       - $token
       - '123456'
+    - contains:
+      - text
+      - '"api-token": "123456"'
 
 

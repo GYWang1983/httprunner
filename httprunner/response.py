@@ -27,9 +27,9 @@ class ResponseObject(object):
             if key == "json":
                 value = self.resp_obj.json()
             elif key == "cookies":
-                value =  self.resp_obj.cookies.get_dict()
+                value = self.resp_obj.cookies.get_dict()
             else:
-                value =  getattr(self.resp_obj, key)
+                value = getattr(self.resp_obj, key)
 
             self.__dict__[key] = value
             return value
@@ -79,6 +79,7 @@ class ResponseObject(object):
                 "status_code"
                 "headers"
                 "cookies"
+                "text"
                 "content"
                 "headers.content-type"
                 "content.person.name.first_name"
@@ -157,7 +158,10 @@ class ResponseObject(object):
                 return None
 
         # response body
-        elif top_query in ["content", "text", "json"]:
+        elif top_query == 'text' and not sub_query:
+            return self.text
+
+        elif top_query in ["content", "json"]:
             try:
                 body = self.json
             except exceptions.JSONDecodeError:
