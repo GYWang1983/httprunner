@@ -142,7 +142,7 @@
       color: #06d85f;
     }
     .popup .content {
-      max-height: 80%;
+      max-height: 75%;
       overflow: auto;
       text-align: left;
     }
@@ -156,6 +156,12 @@
       }
       .popup {
         width: 70%;
+      }
+    }
+
+    @-moz-document url-prefix() {
+      .popup .content {
+        height: 75%;
       }
     }
 
