@@ -185,6 +185,7 @@ def length_less_than_or_equals(check_value, expect_value):
     assert isinstance(expect_value, integer_types)
     assert len(check_value) <= expect_value
 
+
 def contains(check_value, expect_value):
     assert isinstance(check_value, (list, tuple, dict, basestring))
     try:
@@ -193,12 +194,28 @@ def contains(check_value, expect_value):
         assert builtin_str(expect_value) in check_value
 
 
+def not_contains(check_value, expect_value):
+    assert isinstance(check_value, (list, tuple, dict, basestring))
+    try:
+        assert expect_value not in check_value
+    except:
+        assert builtin_str(expect_value) not in check_value
+
+
 def contained_by(check_value, expect_value):
     assert isinstance(expect_value, (list, tuple, dict, basestring))
     try:
         assert check_value in expect_value
     except:
         assert builtin_str(check_value) in expect_value
+
+
+def not_contained_by(check_value, expect_value):
+    assert isinstance(expect_value, (list, tuple, dict, basestring))
+    try:
+        assert check_value not in expect_value
+    except:
+        assert builtin_str(check_value) not in expect_value
 
 
 def type_match(check_value, expect_value):

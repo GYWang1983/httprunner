@@ -92,5 +92,11 @@ teststeps:
     - contains:
       - text
       - '"api-token": "123456"'
+    - not_contains:
+      - text
+      - '789'
+    - not_contained_by:
+      - text
+      - '123456'
 
 
